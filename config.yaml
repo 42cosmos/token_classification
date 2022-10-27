@@ -4,6 +4,7 @@ CFG:
   dset_name: klue
   PLM: klue/bert-base
   seed: 42
+  num_labels: 7
 
   max_token_length: 120
   train_batch_size: 32
@@ -15,4 +16,5 @@ CFG:
   dropout: 0.1
   text_column_name: sentence
   label_column_name: ner_tags
-  padding: max_length 
+  padding: max_length
+  
