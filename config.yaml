@@ -8,13 +8,17 @@ CFG:
 
   max_token_length: 120
   train_batch_size: 32
-  vaild_batch_size: 32
+  valid_batch_size: 32
   num_epochs: 5
   learning_rate: 0.0003
   weight_decay: 0.001
   warmup_ratio: 0.05
   dropout: 0.1
-  text_column_name: sentence
-  label_column_name: ner_tags
-  padding: max_length
-  
+  gradient_accumulation_steps: 1
+  fp16: false
+  evaluation_strategy: "steps"
+  save_step: 500
+  eval_step: 500
+  logging_step: 100
+  save_strategy: "steps"
+  metric_for_best_model: true
