@@ -21,4 +21,4 @@ CFG:
   eval_step: 500
   logging_step: 100
   save_strategy: "steps"
-  metric_for_best_model: true
+  metric_for_best_model: "f1"
