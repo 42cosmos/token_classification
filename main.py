@@ -77,3 +77,6 @@ def main():
 
     trainer.train()
     trainer.evaluate()
+
+if __name__ == "__main__":
+    main()
