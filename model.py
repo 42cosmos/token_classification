@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
@@ -9,16 +10,19 @@ from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel,
 
 class RobertaForTokenClassification(RobertaPreTrainedModel):
     def __init__(self, config):
-        super().__init__()
+        super().__init__(config)
         self.num_labels = config.num_labels
-        self.roberta = RobertaModel.from_pretrained("klue/roberta-base")
+        self.roberta = RobertaModel(config, add_pooling_layer=False)
 
-        self.dropout = nn.Dropout(config.dropout)
+        self.dropout = nn.Dropout(
+            config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob)
 
         self.classifier1 = nn.Linear(config.hidden_size, config.hidden_size)
         self.classifier2 = nn.Linear(config.hidden_size, config.hidden_size)
 
         self.classifier = nn.Linear(config.hidden_size * 2, self.num_labels)
+
+        self.post_init()
 
     def forward(self,
                 input_ids: Optional[torch.LongTensor] = None,

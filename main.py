@@ -17,7 +17,6 @@ from transformers import (
     DataCollatorForTokenClassification
 )
 
-import numpy as np
 from easydict import EasyDict
 
 
@@ -37,7 +36,7 @@ def main():
     model_config = AutoConfig.from_pretrained(config.PLM)
     model_config.num_labels = config.num_labels
 
-    model = RobertaForTokenClassification(config.PLM, config=model_config)
+    model = RobertaForTokenClassification(config=model_config)
     tokenizer = AutoTokenizer.from_pretrained(config.PLM)
 
     data_collator = DataCollatorForTokenClassification(tokenizer)
