@@ -1,4 +1,3 @@
-from distutils.command.config import config
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
