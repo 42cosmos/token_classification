@@ -1,4 +1,6 @@
+import os
 import logging
+import numpy as np
 
 import torch
 from torch import nn
@@ -6,16 +8,16 @@ from torch.nn import CrossEntropyLoss
 
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
-from typing import Optional, Tuple, Union
 
 from transformers import (
     AutoConfig,
     BertForTokenClassification,
     AdamW,
     get_linear_schedule_with_warmup)
-from transformers.modeling_outputs import TokenClassifierOutput
 
-from metric import Metric
+from typing import Optional, Tuple, Union
+
+from metric import Metric, show_report
 from tqdm import trange, tqdm
 
 logger = logging.getLogger(__name__)
@@ -158,9 +160,9 @@ class Trainer(object):
             with torch.no_grad():
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
+                          'token_type_ids': batch[2],
                           'labels': batch[3]}
-                if self.args.model_type != 'distilkobert':
-                    inputs['token_type_ids'] = batch[2]
+
                 outputs = self.model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
 
@@ -223,14 +225,15 @@ class Trainer(object):
         torch.save(self.args, os.path.join(self.args.model_dir, 'training_self.args.bin'))
         logger.info("Saving model checkpoint to %s", self.args.model_dir)
 
-    def load_model(self):
-        # Check whether model exists
-        if not os.path.exists(self.args.model_dir):
-            raise Exception("Model doesn't exists! Train first!")
 
-        try:
-            self.model = self.model_class.from_pretrained(self.args.model_dir)
-            self.model.to(self.device)
-            logger.info("***** Model Loaded *****")
-        except:
-            raise Exception("Some model files might be missing...")
+    # def load_model(self):
+    #     # Check whether model exists
+    #     if not os.path.exists(self.args.model_dir):
+    #         raise Exception("Model doesn't exists! Train first!")
+    #
+    #     try:
+    #         self.model = self.model_class.from_pretrained(self.args.model_dir)
+    #         self.model.to(self.device)
+    #         logger.info("***** Model Loaded *****")
+    #     except:
+    #         raise Exception("Some model files might be missing...")
