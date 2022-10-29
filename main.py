@@ -29,7 +29,7 @@ def main():
     trainer = Trainer(config, train_datasets, test_datasets)
 
     trainer.train()
-    trainer.evaluate()
+    trainer.evaluate("test", "eval")
 
 
 if __name__ == "__main__":
