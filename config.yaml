@@ -35,3 +35,5 @@ CFG:
 
   model_dir: ./model
   pred_dir: ./preds
+
+  test_texts: ./data/test.tsv
