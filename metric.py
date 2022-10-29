@@ -1,5 +1,6 @@
 import numpy as np
 from datasets import load_metric
+from seqeval.metrics import classification_report
 
 
 class Metric:
@@ -58,3 +59,7 @@ class Metric:
             "f1": results["overall_f1"],
             "accuracy": results["overall_accuracy"],
         }
+
+
+def show_report(labels, preds):
+    return classification_report(labels, preds, suffix=True)
