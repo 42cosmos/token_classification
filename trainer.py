@@ -184,7 +184,7 @@ class Trainer(object):
 
         # Slot result
         preds = np.argmax(preds, axis=2)
-        slot_label_map = {i: label for i, label in enumerate(self.label_lst)}
+        slot_label_map = {i: label for i, label in enumerate(self.label_list)}
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
 
@@ -199,7 +199,7 @@ class Trainer(object):
                 os.mkdir(self.args.pred_dir)
 
             with open(os.path.join(self.args.pred_dir, "pred_{}.txt".format(step)), "w", encoding="utf-8") as f:
-                for text, true_label, pred_label in zip(self.test_texts, out_label_list, preds_list):
+                for text, true_label, pred_label in zip(self.args.test_texts, out_label_list, preds_list):
                     for t, tl, pl in zip(text, true_label, pred_label):
                         f.write("{} {} {}\n".format(t, tl, pl))
                     f.write("\n")
