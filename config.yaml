@@ -35,5 +35,8 @@ CFG:
 
   model_dir: ./model
   pred_dir: ./preds
+  data_dir: ./data
+  test_file: test.tsv
 
-  test_texts: ./data/test.tsv
+  write_pred: store_true
+  
