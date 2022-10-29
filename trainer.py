@@ -140,12 +140,12 @@ class Trainer(object):
             raise Exception("Only dev and test dataset available")
 
         eval_sampler = SequentialSampler(dataset)
-        eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=self.args.eval_batch_size)
+        eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=self.args.valid_batch_size)
 
         # Eval!
         logger.info("***** Running evaluation on %s dataset *****", mode)
         logger.info("  Num examples = %d", len(dataset))
-        logger.info("  Batch size = %d", self.args.eval_batch_size)
+        logger.info("  Batch size = %d", self.args.valid_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
         preds = None
