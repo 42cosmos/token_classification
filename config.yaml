@@ -32,3 +32,6 @@ CFG:
 
   logging_steps: 1000
   save_steps: 1000
+
+  model_dir: ./model
+  pred_dir: ./preds
