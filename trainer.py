@@ -1,5 +1,7 @@
 import os
 import logging
+import shutil
+
 import numpy as np
 
 import torch
@@ -8,17 +10,18 @@ from torch.nn import CrossEntropyLoss
 
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
-
 from transformers import (
     AutoConfig,
     BertForTokenClassification,
-    AdamW,
     get_linear_schedule_with_warmup)
+
+from torch.optim import AdamW
 
 from typing import Optional, Tuple, Union
 
-from metric import Metric, show_report
 from tqdm import trange, tqdm
+from utils import get_test_texts
+from metric import show_report, compute_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,6 @@ class Trainer(object):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-        self.metric = Metric()
         self.label_list = ["PS", "LC", "OG", "DT", "IT", "QT", "O"]
         id2label = {i: label for i, label in enumerate(self.label_list)}
         label2id = {label: i for i, label in enumerate(self.label_list)}
@@ -50,6 +52,13 @@ class Trainer(object):
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
+
+        self.test_texts = None
+        if self.args.write_pred:
+            self.test_texts = get_test_texts(self.args)
+            # Empty the original prediction files
+            if os.path.exists(self.args.pred_dir):
+                shutil.rmtree(self.args.pred_dir)
 
     def train(self):
         train_sampler = RandomSampler(self.train_dataset)
@@ -199,12 +208,12 @@ class Trainer(object):
                 os.mkdir(self.args.pred_dir)
 
             with open(os.path.join(self.args.pred_dir, "pred_{}.txt".format(step)), "w", encoding="utf-8") as f:
-                for text, true_label, pred_label in zip(self.args.test_texts, out_label_list, preds_list):
+                for text, true_label, pred_label in zip(self.test_texts, out_label_list, preds_list):
                     for t, tl, pl in zip(text, true_label, pred_label):
                         f.write("{} {} {}\n".format(t, tl, pl))
                     f.write("\n")
 
-        result = self.metric.compute_metrics(out_label_list, preds_list)
+        result = compute_metrics(out_label_list, preds_list)
         results.update(result)
 
         logger.info("***** Eval results *****")
@@ -224,7 +233,6 @@ class Trainer(object):
         # Save training arguments together with the trained model
         torch.save(self.args, os.path.join(self.args.model_dir, 'training_self.args.bin'))
         logger.info("Saving model checkpoint to %s", self.args.model_dir)
-
 
     # def load_model(self):
     #     # Check whether model exists
