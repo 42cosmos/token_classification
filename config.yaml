@@ -39,4 +39,8 @@ CFG:
   test_file: test.tsv
 
   write_pred: store_true
+
+  # wandb setting
+  entity_name: cosmos42
+  project_name: token-classification
   

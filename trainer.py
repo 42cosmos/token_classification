@@ -17,7 +17,7 @@ from transformers import (
 
 from torch.optim import AdamW
 
-from typing import Optional, Tuple, Union
+import wandb
 
 from tqdm import trange, tqdm
 from utils import get_test_texts
@@ -49,6 +49,7 @@ class Trainer(object):
         self.model = BertForTokenClassification.from_pretrained(self.args.PLM,
                                                                 config=self.model_config
                                                                 )
+        wandb.watch(self.model)
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
@@ -139,6 +140,7 @@ class Trainer(object):
             if 0 < self.args.max_steps < global_step:
                 train_iterator.close()
                 break
+            wandb.log({"loss": tr_loss}, step=step)
 
         return global_step, tr_loss / global_step
 
@@ -190,6 +192,7 @@ class Trainer(object):
         results = {
             "loss": eval_loss
         }
+        wandb.log(results, step=step)
 
         # Slot result
         preds = np.argmax(preds, axis=2)

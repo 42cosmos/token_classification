@@ -1,6 +1,7 @@
 import numpy as np
 from datasets import load_metric
 from seqeval.metrics import precision_score, recall_score, f1_score, classification_report
+import wandb
 
 
 def compute_metrics(labels, preds):
@@ -9,11 +10,13 @@ def compute_metrics(labels, preds):
 
 
 def f1_pre_rec(labels, preds):
-    return {
+    results = {
         "precision": precision_score(labels, preds, suffix=True),
         "recall": recall_score(labels, preds, suffix=True),
         "f1": f1_score(labels, preds, suffix=True)
     }
+    wandb.log(results)
+    return results
 
 
 def show_report(labels, preds):
