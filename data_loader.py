@@ -17,7 +17,7 @@ class InputFeatures:
         self.label_ids = label_ids
 
 
-class DataLoader:
+class Loader:
     def __init__(self, CFG):
         self.config = CFG
         self.dset_name = CFG.dset_name
@@ -27,62 +27,58 @@ class DataLoader:
         self.max_length = CFG.max_token_length
         self.seed = CFG.seed
 
+        self.tokenizer = AutoTokenizer.from_pretrained(self.PLM)
+
     def load(self, mode):
         dataset = load_dataset(self.dset_name, self.task, split=mode)
-        tokenizer = AutoTokenizer.from_pretrained(self.PLM)
-        encode_fn = partial(self.label_tokens_ner, tokenizer=tokenizer)
-        features = list(map(encode_fn, dataset))
+        features = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
 
-        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-        all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-        all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
+        all_input_ids = torch.tensor([f["input_ids"] for f in features], dtype=torch.long)
+        all_attention_mask = torch.tensor([f["attention_mask"] for f in features], dtype=torch.long)
+        all_token_type_ids = torch.tensor([f["token_type_ids"] for f in features], dtype=torch.long)
+        all_label_ids = torch.tensor([f["labels"] for f in features], dtype=torch.long)
 
         dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_label_ids)
 
         return dataset
 
-    def label_tokens_ner(self, examples, tokenizer):
-        sentence = "".join(examples["tokens"])
-        tokenized_output = tokenizer(
-            sentence,
-            return_token_type_ids=True,
-            return_offsets_mapping=True,
-            max_length=self.config.max_token_length,
-            padding=self.config.padding,
-            truncation=True)
-        label_token_map = []
-
-        list_label = examples["ner_tags"]
-        list_label = [-100] + list_label + [-100]
-
-        for token_idx, offset_map in enumerate(tokenized_output["offset_mapping"]):
-            begin_letter_idx, end_letter_idx = offset_map
-            label_begin = list_label[begin_letter_idx]
-            label_end = list_label[end_letter_idx]
-            token_label = np.array([label_begin, label_end])
-            if label_begin == 12 and label_end == 12:
-                token_label = 12
-            elif label_begin == -100 and label_end == -100:
-                token_label = -100
+    @staticmethod
+    def align_labels_with_tokens(labels, word_ids):
+        new_labels = []
+        current_word = None
+        for word_id in word_ids:
+            if word_id != current_word:
+                # 새로운 단어의 시작 토큰.
+                current_word = word_id
+                label = -100 if word_id is None else labels[word_id]
+                new_labels.append(label)
+            elif word_id is None:
+                # 특수 토큰.
+                new_labels.append(-100)
             else:
-                token_label = label_begin if label_begin != 12 else 12
-                token_label = label_end if label_end != 12 else 12
+                # 이전 토큰과 동일한 단어에 소속된 토큰.
+                label = labels[word_id]
+                # 만약 레이블이 B-XXX이면 이를 I-XXX로 변경.
+                if label % 2 == 1:
+                    label += 1
+                new_labels.append(label)
 
-            label_token_map.append(token_label)
+        return new_labels
 
-        tokenized_output["labels"] = [LABEL_MAPPING[t] for t in label_token_map]
-
-        input_ids = tokenized_output["input_ids"]
-        attention_mask = tokenized_output["attention_mask"]
-        token_type_ids = tokenized_output["token_type_ids"]
-        label_ids = tokenized_output["labels"]
-
-        features = InputFeatures(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            label_ids=label_ids
+    def tokenize_and_align_labels(self, examples):
+        tokenized_inputs = self.tokenizer(
+            examples["tokens"],
+            truncation=True,
+            is_split_into_words=True,
+            padding=self.config.padding,
+            max_length=self.config.max_token_length
         )
+        all_labels = examples["ner_tags"]
+        new_labels = []
+        for i, labels in enumerate(all_labels):
+            word_ids = tokenized_inputs.word_ids(i)  # 배치(batch) 인덱스 지정
+            new_labels.append(self.align_labels_with_tokens(labels, word_ids))
 
-        return features
+        tokenized_inputs["labels"] = new_labels
+
+        return tokenized_inputs

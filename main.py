@@ -6,7 +6,7 @@ import torch
 import wandb
 from dotenv import load_dotenv
 
-from data_loader import DataLoader
+from data_loader import Loader
 from trainer import Trainer
 
 from transformers import set_seed
@@ -31,7 +31,7 @@ def main(args):
     set_seed(config.seed)
     wandb.init(entity=config.entity_name, project=config.project_name, config=config)
 
-    loader = DataLoader(config)
+    loader = Loader(config)
 
     train_datasets = loader.load("train")
     test_datasets = loader.load("validation")
@@ -42,6 +42,7 @@ def main(args):
         trainer.train()
 
     if args.do_eval:
+        trainer.load_model()
         trainer.evaluate("test", "eval")
 
     wandb.finish()

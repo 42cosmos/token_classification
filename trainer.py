@@ -20,7 +20,7 @@ from torch.optim import AdamW
 import wandb
 
 from tqdm import trange, tqdm
-from utils import get_test_texts
+from utils import get_test_texts, get_labels
 from metric import show_report, compute_metrics
 
 logger = logging.getLogger(__name__)
@@ -32,17 +32,16 @@ class Trainer(object):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-        self.label_list = ["PS", "LC", "OG", "DT", "IT", "QT", "O"]
-        id2label = {i: label for i, label in enumerate(self.label_list)}
-        label2id = {label: i for i, label in enumerate(self.label_list)}
+        self.label2id = get_labels()
+        self.id2label = {v: k for k, v in self.label2id.items()}
 
-        self.num_labels = len(self.label_list)
+        self.num_labels = len(self.label2id.keys())
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
 
         self.model_config = AutoConfig.from_pretrained(self.args.PLM,
                                                        num_labels=self.num_labels,
-                                                       id2label=id2label,
-                                                       label2id=label2id,
+                                                       id2label=self.id2label,
+                                                       label2id=self.label2id,
                                                        finetuning_task=config.task,
                                                        )
 
@@ -137,18 +136,17 @@ class Trainer(object):
                     epoch_iterator.close()
                     break
 
+                wandb.log({"loss": tr_loss}, step=step)
+
             if 0 < self.args.max_steps < global_step:
                 train_iterator.close()
                 break
-            wandb.log({"loss": tr_loss}, step=step)
 
         return global_step, tr_loss / global_step
 
     def evaluate(self, mode, step):
         if mode == 'test':
             dataset = self.test_dataset
-        elif mode == 'dev':
-            dataset = self.dev_dataset
         else:
             raise Exception("Only dev and test dataset available")
 
@@ -192,19 +190,21 @@ class Trainer(object):
         results = {
             "loss": eval_loss
         }
-        wandb.log(results, step=step)
+        wandb.log({"eval": results}, step=nb_eval_steps)
 
         # Slot result
         preds = np.argmax(preds, axis=2)
-        slot_label_map = {i: label for i, label in enumerate(self.label_list)}
+        slot_label_map = self.id2label
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
 
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
                 if out_label_ids[i, j] != self.pad_token_label_id:
-                    out_label_list[i].append(slot_label_map[out_label_ids[i][j]])
-                    preds_list[i].append(slot_label_map[preds[i][j]])
+                    out_label = slot_label_map[out_label_ids[i][j]]
+                    pred_label = slot_label_map[preds[i][j]]
+                    out_label_list[i].append(out_label)
+                    preds_list[i].append(pred_label)
 
         if self.args.write_pred:
             if not os.path.exists(self.args.pred_dir):
@@ -218,6 +218,7 @@ class Trainer(object):
 
         result = compute_metrics(out_label_list, preds_list)
         results.update(result)
+        # wandb.log({"eval_result": results})
 
         logger.info("***** Eval results *****")
         for key in sorted(results.keys()):
@@ -237,14 +238,14 @@ class Trainer(object):
         torch.save(self.args, os.path.join(self.args.model_dir, 'training_self.args.bin'))
         logger.info("Saving model checkpoint to %s", self.args.model_dir)
 
-    # def load_model(self):
-    #     # Check whether model exists
-    #     if not os.path.exists(self.args.model_dir):
-    #         raise Exception("Model doesn't exists! Train first!")
-    #
-    #     try:
-    #         self.model = self.model_class.from_pretrained(self.args.model_dir)
-    #         self.model.to(self.device)
-    #         logger.info("***** Model Loaded *****")
-    #     except:
-    #         raise Exception("Some model files might be missing...")
+    def load_model(self):
+        # Check whether model exists
+        if not os.path.exists(self.args.model_dir):
+            raise Exception("Model doesn't exists! Train first!")
+
+        try:
+            self.model = BertForTokenClassification.from_pretrained(self.args.model_dir)
+            self.model.to(self.device)
+            logger.info("***** Model Loaded *****")
+        except:
+            raise Exception("Some model files might be missing...")
