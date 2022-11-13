@@ -35,13 +35,13 @@ def compute_metrics(labels, preds):
 
 def f1_pre_rec(labels, preds):
     results = {
-        "precision": precision_score(labels, preds, suffix=True),
-        "recall": recall_score(labels, preds, suffix=True),
-        "f1": f1_score(labels, preds, suffix=True)
+        "precision": precision_score(labels, preds, suffix=False),
+        "recall": recall_score(labels, preds, suffix=False),
+        "f1": f1_score(labels, preds, suffix=False),
     }
     # wandb.log(results)
     return results
 
 
 def show_report(labels, preds):
-    return classification_report(labels, preds, suffix=True)
+    return classification_report(labels, preds, suffix=False)
