@@ -33,8 +33,8 @@ def main(args):
 
     loader = Loader(config)
 
-    train_datasets = loader.load("train")
-    test_datasets = loader.load("validation")
+    train_datasets = loader.get_dataset(evaluate=False) if args.do_train else None
+    test_datasets = loader.get_dataset(evaluate=True) if args.do_eval else None
 
     trainer = Trainer(config, train_datasets, test_datasets)
 
@@ -44,8 +44,6 @@ def main(args):
     if args.do_eval:
         trainer.load_model()
         trainer.evaluate("test", "eval")
-
-    wandb.finish()
 
 
 if __name__ == "__main__":
