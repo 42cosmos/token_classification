@@ -218,13 +218,11 @@ class Trainer(object):
 
         result = compute_metrics(out_label_list, preds_list)
         results.update(result)
-        # wandb.log({"eval_result": results})
-
         logger.info("***** Eval results *****")
         for key in sorted(results.keys()):
             logger.info("  %s = %s", key, str(results[key]))
         logger.info("\n" + show_report(out_label_list, preds_list))  # Get the report for each tag result
-
+        wandb.log({"eval/": results})
         return results
 
     def save_model(self):
