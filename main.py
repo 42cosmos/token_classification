@@ -1,3 +1,4 @@
+import logging
 import os
 import yaml
 import random
@@ -10,6 +11,7 @@ from data_loader import Loader
 from trainer import Trainer
 
 from transformers import set_seed
+from transformers.trainer_utils import get_last_checkpoint
 
 from easydict import EasyDict
 from utils import init_logger
@@ -19,6 +21,7 @@ import argparse
 
 def main(args):
     init_logger()
+    logger = logging.getLogger(__name__)
     load_dotenv()
 
     WANDB_API_KEY = os.getenv('WANDB_API_KEY')
@@ -29,6 +32,16 @@ def main(args):
         config = EasyDict(saved_config["CFG"])
 
     set_seed(config.seed)
+
+    last_checkpoint = None
+    if os.path.exists(config.checkpoint_path):
+        last_checkpoint = get_last_checkpoint(config.checkpoint_path)
+        if last_checkpoint is not None:
+            logger.info(f"Checkpoint detected. Resuming from {last_checkpoint}")
+            config.model_name_or_path = last_checkpoint
+        else:
+            logger.info(f"No checkpoint found, training from scratch: {config.model_name_or_path}")
+
     wandb.init(entity=config.entity_name, project=config.project_name, config=config)
 
     loader = Loader(config)

@@ -47,7 +47,7 @@ class Loader:
             if self.config.dset_name == "docent":
                 dataset = load_dataset(path=self.config.data_dir, split=dataset_type)
 
-            elif self.config.dset_name == "klue":
+            else:
                 dataset = load_dataset(self.dset_name, self.task, split=dataset_type)
 
             features = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
