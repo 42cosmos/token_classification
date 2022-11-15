@@ -38,14 +38,14 @@ class Trainer(object):
         self.num_labels = len(self.label2id.keys())
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
 
-        self.model_config = AutoConfig.from_pretrained(self.args.PLM,
+        self.model_config = AutoConfig.from_pretrained(self.args.model_name_or_path,
                                                        num_labels=self.num_labels,
                                                        id2label=self.id2label,
                                                        label2id=self.label2id,
                                                        finetuning_task=config.task,
                                                        )
 
-        self.model = BertForTokenClassification.from_pretrained(self.args.PLM,
+        self.model = BertForTokenClassification.from_pretrained(self.args.model_name_or_path,
                                                                 config=self.model_config
                                                                 )
         wandb.watch(self.model)
@@ -109,6 +109,9 @@ class Trainer(object):
                           'token_type_ids': batch[2],
                           'labels': batch[3]}
 
+                if not self.args.use_token_types:
+                    del inputs['token_type_ids']
+
                 outputs = self.model(**inputs)
                 loss = outputs[0]
 
@@ -171,6 +174,9 @@ class Trainer(object):
                           'attention_mask': batch[1],
                           'token_type_ids': batch[2],
                           'labels': batch[3]}
+
+                if not self.args.use_token_types:
+                    del inputs['token_type_ids']
 
                 outputs = self.model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
