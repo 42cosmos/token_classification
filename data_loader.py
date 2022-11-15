@@ -33,11 +33,12 @@ class Loader:
         self.max_length = CFG.max_token_length
         self.seed = CFG.seed
        
-        self.tokenizer = AutoTokenizer.from_pretrained(self.config.PLM)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name_or_path)
 
     def get_dataset(self, evaluate=False):
         dataset_type = "validation" if evaluate else "train"
-        cached_file_name = f"cached_{self.dset_name}_{self.model_name_or_path}_{dataset_type}"
+        model_info = self.model_name_or_path.split("/")[-1]
+        cached_file_name = f"cached_{self.dset_name}_{model_info}_{dataset_type}"
         cached_features_file = os.path.join(self.config.data_dir, cached_file_name)
 
         if os.path.exists(cached_features_file):
