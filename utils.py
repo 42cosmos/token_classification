@@ -49,6 +49,8 @@ def get_labels():
     I-QT(9)
     B-TI(10)
     I-TI(11)
-    O(12)""".split("\n")
+    O(12)
+    B-DUR(13)
+    I-DUR(14)""".split("\n")
     result = {label.split("(")[0].strip(): int(label.split("(")[1].replace(")", "")) for label in label_raw}
     return result
