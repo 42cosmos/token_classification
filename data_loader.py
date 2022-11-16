@@ -46,13 +46,15 @@ class Loader:
             logger.info(f"Loading features from cached file {cached_features_file}")
             dataset = torch.load(cached_features_file)
         else:
-            if self.config.dset_name == "docent":
+            if not self.config.dset_name == "klue":
                 dataset = load_dataset(path=self.config.data_dir, split=dataset_type)
 
             else:
                 dataset = load_dataset(self.dset_name, self.task, split=dataset_type)
 
             dataset = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
+            torch.save(dataset, cached_features_file)
+            logger.info(f"Saved features into cached file {cached_features_file}")
 
         return dataset
 
