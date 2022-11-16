@@ -15,6 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class InputFeatures:
     def __init__(self, input_ids, attention_mask, token_type_ids, label_ids):
         self.input_ids = input_ids
@@ -24,7 +25,7 @@ class InputFeatures:
 
 
 class Loader:
-    def __init__(self, CFG):
+    def __init__(self, CFG, tokenizer):
         self.config = CFG
         self.dset_name = CFG.dset_name
         self.task = CFG.task
@@ -32,8 +33,8 @@ class Loader:
         self.batch_size = CFG.train_batch_size
         self.max_length = CFG.max_token_length
         self.seed = CFG.seed
-       
-        self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name_or_path)
+
+        self.tokenizer = tokenizer
 
     def get_dataset(self, evaluate=False):
         dataset_type = "validation" if evaluate else "train"
@@ -51,16 +52,7 @@ class Loader:
             else:
                 dataset = load_dataset(self.dset_name, self.task, split=dataset_type)
 
-            features = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
-
-            all_input_ids = torch.tensor([f["input_ids"] for f in features], dtype=torch.long)
-            all_attention_mask = torch.tensor([f["attention_mask"] for f in features], dtype=torch.long)
-            all_token_type_ids = torch.tensor([f["token_type_ids"] for f in features], dtype=torch.long)
-            all_label_ids = torch.tensor([f["labels"] for f in features], dtype=torch.long)
-
-            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_label_ids)
-            logger.info(f"Saving features into cached file {cached_features_file}")
-            torch.save(dataset, cached_features_file)
+            dataset = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
 
         return dataset
 
