@@ -1,5 +1,7 @@
 import logging
 import os
+
+import numpy as np
 import yaml
 import random
 import torch
@@ -39,7 +41,7 @@ def main(args):
 
     with open("config.yaml", "r") as f:
         saved_config = yaml.load(f, Loader=yaml.FullLoader)
-        hparams = EasyDict(saved_config["CFG"])
+        hparams = EasyDict(saved_config)
 
     set_seed(hparams.seed)
 
@@ -50,21 +52,23 @@ def main(args):
     id_to_label = {v: k for k, v in label_to_id.items()}
     num_labels = len(label_to_id)
 
-    # last_checkpoint = None
-    # if os.path.exists(hparams.checkpoint_path):
-    #     last_checkpoint = get_last_checkpoint(hparams.checkpoint_path)
-    #     if last_checkpoint is not None:
-    #         logger.info(f"Checkpoint detected. Resuming from {last_checkpoint}")
-    #         hparams.model_name_or_path = last_checkpoint
-    #     else:
-    #         logger.info(f"No checkpoint found, training from scratch: {hparams.model_name_or_path}")
+    if args.load_checkpoint:
+        last_checkpoint = None
+        if os.path.exists(hparams.checkpoint_path):
+            last_checkpoint = get_last_checkpoint(hparams.checkpoint_path)
+            if last_checkpoint is not None:
+                logger.info(f"Checkpoint detected. Resuming from {last_checkpoint}")
+                hparams.model_name_or_path = last_checkpoint
+            else:
+                logger.info(f"No checkpoint found, training from scratch: {hparams.model_name_or_path}")
 
-    if not os.path.exists(hparams.checkpoint_path):
-        os.makedirs(hparams.checkpoint_path)
+        if not os.path.exists(hparams.checkpoint_path):
+            os.makedirs(hparams.checkpoint_path)
 
-    elif os.path.exists(hparams.checkpoint_path) and len(os.listdir(hparams.checkpoint_path)) > 1:
-        hparams.model_name_or_path = hparams.checkpoint_path
-        logger.info(f"***** Load Model from {hparams.model_name_or_path} *****")
+    elif not args.load_checkpoint:
+        if os.path.exists(hparams.checkpoint_path) and len(os.listdir(hparams.checkpoint_path)) > 1:
+            hparams.model_name_or_path = hparams.checkpoint_path
+            logger.info(f"***** Load Model from {hparams.model_name_or_path} *****")
 
     config = AutoConfig.from_pretrained(
         hparams.model_name_or_path,
@@ -87,7 +91,7 @@ def main(args):
     loader = Loader(hparams, tokenizer)
 
     train_datasets = loader.get_dataset(evaluate=False) if args.do_train else None
-    test_datasets = loader.get_dataset(evaluate=True) if args.do_eval else None
+    test_datasets = loader.get_dataset(evaluate=True) if args.do_eval or args.do_predict else None
 
     training_args = TrainingArguments(num_train_epochs=hparams.num_train_epochs,
                                       per_device_train_batch_size=hparams.train_batch_size,
@@ -123,6 +127,9 @@ def main(args):
         metrics["train_samples"] = len(train_datasets)
 
         logger.info(metrics)
+        trainer.log_metrics("train", metrics)
+        trainer.save_metrics("train", metrics)
+        trainer.save_state()
 
     if args.do_eval:
         logger.info("*** Evaluate ***")
@@ -131,6 +138,8 @@ def main(args):
         metrics["eval_samples"] = len(test_datasets)
 
         logger.info(metrics)
+        trainer.log_metrics("eval", metrics)
+        trainer.save_metrics("eval", metrics)
 
 
 if __name__ == "__main__":
@@ -138,6 +147,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
+    # parser.add_argument("--do_predict", action="store_true")
+    parser.add_argument("--load_checkpoint", action="store_true", help="Load checkpoint")
 
     args = parser.parse_args()
     main(args)

@@ -1,46 +1,44 @@
-CFG:
-  # dataset args
-  task: ner
-  dset_name: klue
-  PLM: klue/bert-base
-  seed: 42
+task: ner
+dset_name: klue # docent
+model_name_or_path: klue/bert-base
+checkpoint_path: ./model
+seed: 42
 
-  padding: max_length
-  max_token_length: 120
-  pad_token_label_id: -100
+use_token_types: true
+padding: max_length
+max_token_length: 120
+pad_token_label_id: -100
 
-  num_train_epochs: 3
-  train_batch_size: 32
-  valid_batch_size: 32
-  num_epochs: 5
-  learning_rate: 0.0003
-  weight_decay: 0.001
-  warmup_steps: 500
-  warmup_ratio: 0.05
-  classifier_dropout: 0.1
-  gradient_accumulation_steps: 1
-  fp16: false
-  evaluation_strategy: steps
-  save_step: 500
-  eval_step: 500
-  logging_step: 100
-  save_strategy: steps
-  metric_for_best_model: f1
-  adam_epsilon: 0.00000001
-  max_steps: -1
-  max_grad_norm: 1.0
+num_train_epochs: 3
+train_batch_size: 32
+valid_batch_size: 32
+num_epochs: 5
+learning_rate: 0.0003
+weight_decay: 0.001
+warmup_steps: 500
+warmup_ratio: 0.05
+classifier_dropout: 0.1
+gradient_accumulation_steps: 1
+fp16: false
+evaluation_strategy: steps
+eval_steps: 500
+logging_steps: 100
+save_strategy: steps
+metric_for_best_model: f1
+adam_epsilon: 0.00000001
+max_steps: -1
+max_grad_norm: 1.0
 
-  logging_steps: 1000
-  save_steps: 1000
+save_steps: 1000
 
-  model_dir: ./model
-  pred_dir: ./preds
-  data_dir: ./data
-  test_file: test.tsv
+model_dir: ./model
+pred_dir: ./preds
+data_dir: ./data
+test_file: test.tsv
 
-  write_pred: store_true
+write_pred: false
 
-  # wandb setting
-  entity_name: cosmos42
-  project_name: token-classification
-  
+# wandb setting
+entity_name: cosmos42
+project_name: token-classification
+
