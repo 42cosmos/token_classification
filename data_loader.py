@@ -47,7 +47,8 @@ class Loader:
             dataset = torch.load(cached_features_file)
         else:
             if not self.config.dset_name == "klue":
-                dataset = load_dataset(path=self.config.data_dir, split=dataset_type)
+                dataset = load_dataset(path=os.path.join(self.config.data_dir, self.config.dset_name),
+                                       split=dataset_type)
 
             else:
                 dataset = load_dataset(self.dset_name, self.task, split=dataset_type)
