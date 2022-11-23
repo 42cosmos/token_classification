@@ -147,18 +147,13 @@ class Trainer(object):
 
         return global_step, tr_loss / global_step
 
-    def evaluate(self, mode, step):
-        if mode == 'test':
-            dataset = self.test_dataset
-        else:
-            raise Exception("Only dev and test dataset available")
-
-        eval_sampler = SequentialSampler(dataset)
-        eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=self.args.valid_batch_size)
+    def evaluate(self, step):
+        eval_sampler = SequentialSampler(self.test_dataset)
+        eval_dataloader = DataLoader(self.test_dataset, sampler=eval_sampler, batch_size=self.args.valid_batch_size)
 
         # Eval!
-        logger.info("***** Running evaluation on %s dataset *****", mode)
-        logger.info("  Num examples = %d", len(dataset))
+        logger.info("***** Running evaluation on test dataset *****")
+        logger.info("  Num examples = %d", len(self.test_dataset))
         logger.info("  Batch size = %d", self.args.valid_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
