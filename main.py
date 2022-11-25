@@ -107,6 +107,8 @@ def main(args):
                                       output_dir=hparams.checkpoint_path,
                                       evaluation_strategy="steps",
                                       save_strategy="steps",
+                                      metric_for_best_model="f1",
+                                      load_best_model_at_end=True,
                                       )
 
     trainer = Trainer(args=training_args,
