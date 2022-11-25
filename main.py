@@ -7,7 +7,8 @@ import random
 import torch
 
 import utils
-import wandb
+import mlflow
+from mlflow import log_metric, log_param, log_artifacts
 from dotenv import load_dotenv
 
 from data_loader import Loader
@@ -19,7 +20,8 @@ from transformers import (
     AutoConfig,
     AutoTokenizer,
     AutoModelForTokenClassification,
-    default_data_collator
+    default_data_collator,
+    EarlyStoppingCallback
 )
 from transformers.trainer_utils import get_last_checkpoint
 
@@ -36,16 +38,12 @@ def main(args):
     init_logger()
     load_dotenv()
 
-    WANDB_API_KEY = os.getenv('WANDB_API_KEY')
-    wandb.login(key=WANDB_API_KEY)
+    mlflow.pytorch.autolog()
 
     with open("config.yaml", "r") as f:
         saved_config = yaml.load(f, Loader=yaml.FullLoader)
         hparams = EasyDict(saved_config)
 
-    set_seed(hparams.seed)
-
-    wandb.init(entity=hparams.entity_name, project=hparams.project_name, config=hparams)
     set_seed(hparams.seed)
 
     label_to_id = utils.get_labels()
@@ -105,7 +103,7 @@ def main(args):
                                       logging_steps=hparams.logging_steps,
                                       save_steps=hparams.save_steps,
                                       fp16=hparams.fp16,
-                                      report_to="wandb",
+                                      report_to="mlflow",
                                       output_dir=hparams.checkpoint_path,
                                       evaluation_strategy="steps",
                                       save_strategy="steps",
@@ -117,7 +115,9 @@ def main(args):
                       eval_dataset=test_datasets,
                       tokenizer=tokenizer,
                       data_collator=default_data_collator,
-                      compute_metrics=compute_metrics)
+                      compute_metrics=compute_metrics,
+                      callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+                      )
 
     if args.do_train:
         train_result = trainer.train()
