@@ -33,4 +33,4 @@ class S3Downloader:
             bucket.download_file(obj.key, obj.key)  # save to same path
 
         logger.info("***** Downloading data is done *****")
-        logger.info(f"Dataset is saved in {os.getcwd()}")
+        logger.info(f"Dataset is saved in {prefix}")
