@@ -1,5 +1,5 @@
-import glob
 import os
+import glob
 
 import torch
 import numpy as np
@@ -9,6 +9,7 @@ from easydict import EasyDict
 from torch.utils.data import TensorDataset
 from transformers import AutoTokenizer
 
+from s3_downloader import S3Downloader
 from utils import LABEL_MAPPING
 
 import logging
@@ -39,19 +40,15 @@ class Loader:
     def get_dataset(self, evaluate=False):
         dataset_type = "validation" if evaluate else "train"
         model_info = self.model_name_or_path.split("/")[-1]
-        cached_file_name = f"cached_{self.dset_name}_{model_info}_{dataset_type}"
+        cached_file_name = f"cached_{self.dset_name}_{dataset_type}"
         cached_features_file = os.path.join(self.config.data_dir, cached_file_name)
 
         if os.path.exists(cached_features_file):
             logger.info(f"Loading features from cached file {cached_features_file}")
             dataset = torch.load(cached_features_file)
         else:
-            if not self.config.dset_name == "klue":
-                dataset = load_dataset(path=os.path.join(self.config.data_dir, self.config.dset_name),
-                                       split=dataset_type)
-
-            else:
-                dataset = load_dataset(self.dset_name, self.task, split=dataset_type)
+            dataset = load_dataset(path=os.path.join(self.config.data_dir, self.config.dset_name),
+                                   split=dataset_type)
 
             dataset = dataset.map(self.tokenize_and_align_labels, batched=True, remove_columns=dataset.column_names)
             torch.save(dataset, cached_features_file)
