@@ -7,8 +7,6 @@ import random
 import torch
 
 import utils
-import mlflow
-from mlflow import log_metric, log_param, log_artifacts
 from dotenv import load_dotenv
 
 from data_loader import Loader
@@ -38,12 +36,11 @@ def main(args):
     init_logger()
     load_dotenv()
 
-    mlflow.pytorch.autolog()
-
     with open("config.yaml", "r") as f:
         saved_config = yaml.load(f, Loader=yaml.FullLoader)
         hparams = EasyDict(saved_config)
 
+    hparams.dset_name = args.dset_name
     set_seed(hparams.seed)
 
     label_to_id = utils.get_labels()
@@ -103,7 +100,6 @@ def main(args):
                                       logging_steps=hparams.logging_steps,
                                       save_steps=hparams.save_steps,
                                       fp16=hparams.fp16,
-                                      report_to="mlflow",
                                       output_dir=hparams.checkpoint_path,
                                       evaluation_strategy="steps",
                                       save_strategy="steps",
@@ -122,6 +118,8 @@ def main(args):
                       )
 
     if args.do_train:
+        # with mlflow.start_run():
+        #     mlflow.autolog()
         train_result = trainer.train()
         metrics = train_result.metrics
         trainer.save_model()
@@ -149,8 +147,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
-    # parser.add_argument("--do_predict", action="store_true")
     parser.add_argument("--load_checkpoint", action="store_true", help="Load checkpoint")
+    parser.add_argument("--dset_name", default="klue", help="dataset name you want to use", choices=["klue", "docent"])
 
     args = parser.parse_args()
     main(args)
