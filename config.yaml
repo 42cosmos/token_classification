@@ -1,5 +1,4 @@
 task: ner
-dset_name: klue # docent
 model_name_or_path: klue/bert-base
 checkpoint_path: ./model
 seed: 42
@@ -32,8 +31,7 @@ max_grad_norm: 1.0
 save_steps: 1000
 
 model_dir: ./model
-pred_dir: ./preds
-data_dir: ./data
+data_dir: ./token_data
 test_file: test.tsv
 
 write_pred: false
