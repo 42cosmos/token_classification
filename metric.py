@@ -1,9 +1,8 @@
-import numpy as np
-import evaluate
-import wandb
 import utils
 import logging
+import numpy as np
 
+import evaluate
 from seqeval.metrics import classification_report
 
 metric = evaluate.load("seqeval")
@@ -48,23 +47,3 @@ def compute_metrics(p, return_entity_level_metrics=False):
             "f1": results["overall_f1"],
             "accuracy": results["overall_accuracy"],
         }
-
-
-#
-# def compute_metrics(labels, preds):
-#     assert len(preds) == len(labels)
-#     return f1_pre_rec(labels, preds)
-#
-#
-# def f1_pre_rec(labels, preds):
-#     results = {
-#         "precision": precision_score(labels, preds, suffix=False),
-#         "recall": recall_score(labels, preds, suffix=False),
-#         "f1": f1_score(labels, preds, suffix=False),
-#     }
-#     # wandb.log(results)
-#     return results
-
-
-# def show_report(labels, preds):
-#     return classification_report(labels, preds, suffix=False)
