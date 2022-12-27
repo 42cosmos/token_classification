@@ -85,8 +85,8 @@ def main(args):
 
     loader = Loader(hparams, tokenizer)
 
-    train_datasets = loader.get_dataset(evaluate=False) if args.do_train else None
-    test_datasets = loader.get_dataset(evaluate=True) if args.do_eval or args.do_predict else None
+    train_datasets = loader.get_dataset(dataset_type="train") if args.do_train else None
+    eval_datasets = loader.get_dataset(dataset_type="validation") if args.do_eval else None
 
     training_args = TrainingArguments(num_train_epochs=hparams.num_train_epochs,
                                       per_device_train_batch_size=hparams.train_batch_size,
@@ -110,7 +110,7 @@ def main(args):
     trainer = Trainer(args=training_args,
                       model=model,
                       train_dataset=train_datasets,
-                      eval_dataset=test_datasets,
+                      eval_dataset=eval_datasets,
                       tokenizer=tokenizer,
                       data_collator=default_data_collator,
                       compute_metrics=compute_metrics,
@@ -135,7 +135,7 @@ def main(args):
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate()
 
-        metrics["eval_samples"] = len(test_datasets)
+        metrics["eval_samples"] = len(eval_datasets)
 
         logger.info(metrics)
         trainer.log_metrics("eval", metrics)
