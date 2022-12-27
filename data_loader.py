@@ -9,20 +9,11 @@ from easydict import EasyDict
 from torch.utils.data import TensorDataset
 from transformers import AutoTokenizer
 
-from s3_downloader import S3Downloader
 from utils import LABEL_MAPPING
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-class InputFeatures:
-    def __init__(self, input_ids, attention_mask, token_type_ids, label_ids):
-        self.input_ids = input_ids
-        self.attention_mask = attention_mask
-        self.token_type_ids = token_type_ids
-        self.label_ids = label_ids
 
 
 class Loader:
@@ -37,8 +28,7 @@ class Loader:
 
         self.tokenizer = tokenizer
 
-    def get_dataset(self, evaluate=False):
-        dataset_type = "validation" if evaluate else "train"
+    def get_dataset(self, dataset_type="train"):
         model_info = self.model_name_or_path.split("/")[-1]
         cached_file_name = f"cached_{self.dset_name}_{dataset_type}"
         cached_features_file = os.path.join(self.config.data_dir, cached_file_name)
@@ -67,7 +57,7 @@ class Loader:
                 label = -100 if word_id is None else labels[word_id]
                 new_labels.append(label)
             elif word_id is None:
-                # 특수 토큰.
+                # 특수 토큰
                 new_labels.append(-100)
             else:
                 # 이전 토큰과 동일한 단어에 소속된 토큰.
