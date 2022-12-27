@@ -25,16 +25,6 @@ def init_logger():
                         level=logging.INFO)
 
 
-def get_test_texts(args):
-    texts = []
-    with open(os.path.join(args.data_dir, args.test_file), 'r', encoding='utf-8') as f:
-        for line in f:
-            text, _ = line.split('\t')
-            text = text.split()
-            texts.append(text)
-
-    return texts
-
 
 def get_labels():
     label_raw = """B-DT(0)
