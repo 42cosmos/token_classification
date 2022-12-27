@@ -1,6 +1,7 @@
 task: ner
 model_name_or_path: klue/bert-base
 checkpoint_path: ./model
+data_dir: ./token_data
 seed: 42
 
 use_token_types: true
@@ -30,13 +31,4 @@ max_grad_norm: 1.0
 
 save_steps: 1000
 
-model_dir: ./model
-data_dir: ./token_data
-test_file: test.tsv
-
 write_pred: false
-
-# wandb setting
-entity_name: cosmos42
-project_name: token-classification
-
