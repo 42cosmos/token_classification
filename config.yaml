@@ -1,5 +1,5 @@
 task: ner
-model_name_or_path: klue/bert-base
+model_name_or_path: monologg/koelectra-base-v3-discriminator
 checkpoint_path: ./model
 data_dir: ./token_data
 seed: 42
@@ -9,7 +9,7 @@ padding: max_length
 max_token_length: 120
 pad_token_label_id: -100
 
-num_train_epochs: 3
+num_train_epochs: 5
 train_batch_size: 32
 valid_batch_size: 32
 num_epochs: 5
@@ -21,7 +21,6 @@ classifier_dropout: 0.1
 gradient_accumulation_steps: 1
 fp16: false
 evaluation_strategy: steps
-eval_steps: 500
 logging_steps: 100
 save_strategy: steps
 metric_for_best_model: f1
