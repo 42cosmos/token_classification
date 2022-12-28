@@ -7,7 +7,7 @@ import random
 import numpy as np
 from easydict import EasyDict
 from dotenv import load_dotenv
-
+from tqdm import tqdm, trange
 import torch
 
 from transformers import (
@@ -22,13 +22,13 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-import utils
-from metric import compute_metrics
-
 import evaluate
 from seqeval.metrics import classification_report
 
+import utils
 from data_loader import Loader
+from metric import compute_metrics
+
 
 logger = logging.getLogger(__name__)
 
