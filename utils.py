@@ -15,6 +15,8 @@ LABEL_MAPPING = {
     10: 5,  # B-TI
     11: 5,
     12: 6,  # O
+    13: 7,
+    14: 7,  # B-DUR
     -100: -100,  # LABEL_PAD_TOKEN
 }
 
@@ -23,7 +25,6 @@ def init_logger():
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
-
 
 
 def get_labels():
