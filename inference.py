@@ -29,10 +29,11 @@ import utils
 from data_loader import Loader
 from metric import compute_metrics
 
-
 logger = logging.getLogger(__name__)
 
 
+def to_tensor(x):
+    return x.detach().cpu().numpy()
 
 
 def main(args):
@@ -86,8 +87,8 @@ def main(args):
     epoch_iterator = tqdm(test_dataset, desc="Iteration")
 
     for step, batch in enumerate(epoch_iterator):
-        trues.extend(batch["labels"])
-        batch = {k: torch.tensor(t).unsqueeze(0) for k, t in batch.items()}
+        trues.append(batch["labels"])
+        batch = {k: torch.tensor(t).unsqueeze(0).to(device) for k, t in batch.items()}
 
         outputs = model(**batch)
 
@@ -95,22 +96,7 @@ def main(args):
         pred = pred.detach().cpu().numpy()
         preds.extend(pred)
 
-    true_predictions = [
-        [id_to_label[p] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(preds, trues)
-    ]
-
-    true_labels = [
-        [id_to_label[l] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(preds, trues)
-    ]
-
-    results = metric.compute(predictions=true_predictions, references=true_labels)
-    logger.info(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
-    logger.info(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
-
-    for k, v in results.items():
-        logger.info(f"{k}: {v}")
+    compute_metrics(p=(preds, trues), inference=True)
 
 
 if __name__ == "__main__":

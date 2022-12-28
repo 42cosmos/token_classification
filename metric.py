@@ -11,9 +11,11 @@ metric = evaluate.load("seqeval")
 logger = logging.getLogger(__name__)
 
 
-def compute_metrics(p, return_entity_level_metrics=False):
+def compute_metrics(p, return_entity_level_metrics=False, inference=False):
     predictions, labels = p
-    predictions = np.argmax(predictions, axis=2)
+
+    if not inference:
+        predictions = np.argmax(predictions, axis=2)
 
     label_list = utils.get_labels()
     id_to_label = {v: k for k, v in label_list.items()}
@@ -39,8 +41,8 @@ def compute_metrics(p, return_entity_level_metrics=False):
             pass
 
     logger.info(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
-    logger.info(f"\n {performance_measure(true_labels, true_predictions)}")
-    logger.info(f"\n {tagging_inform}")
+    for k, v in results.items():
+        logger.info(f"\n{k}: {v}")
 
     if return_entity_level_metrics:
         # Unpack nested dictionaries
