@@ -1,15 +1,14 @@
-import logging
 import os
+import logging
+import argparse
 
-import numpy as np
 import yaml
 import random
-import torch
-
-import utils
+import numpy as np
+from easydict import EasyDict
 from dotenv import load_dotenv
 
-from data_loader import Loader
+import torch
 
 from transformers import (
     set_seed,
@@ -23,21 +22,21 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-from easydict import EasyDict
-from utils import init_logger
+import utils
 from metric import compute_metrics
-
-import argparse
 
 import evaluate
 from seqeval.metrics import classification_report
 
+from data_loader import Loader
 
 logger = logging.getLogger(__name__)
 
 
+
+
 def main(args):
-    init_logger()
+    utils.init_logger()
     load_dotenv()
 
     with open("config.yaml", "r") as f:
@@ -74,14 +73,19 @@ def main(args):
 
     loader = Loader(hparams, tokenizer)
 
-    test_dataset = loader.get_dataset(dataset_type="test")
+    dset_type = "test" if args.dset_name == "docent" else "validation"
+    test_dataset = loader.get_dataset(dataset_type=dset_type)
 
     preds = []
     trues = []
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    for step, batch in enumerate(test_dataset):
-        model.eval()
 
+    model.to(device)
+    model.eval()
+
+    epoch_iterator = tqdm(test_dataset, desc="Iteration")
+
+    for step, batch in enumerate(epoch_iterator):
         trues.extend(batch["labels"])
         batch = {k: torch.tensor(t).unsqueeze(0) for k, t in batch.items()}
 
@@ -102,6 +106,7 @@ def main(args):
     ]
 
     results = metric.compute(predictions=true_predictions, references=true_labels)
+    logger.info(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
     logger.info(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
 
     for k, v in results.items():
