@@ -11,7 +11,7 @@ metric = evaluate.load("seqeval")
 logger = logging.getLogger(__name__)
 
 
-def compute_metrics(p, return_entity_level_metrics=False, inference=False):
+def compute_metrics(p, return_entity_level_metrics=False, inference=False, save_result=False):
     predictions, labels = p
 
     if not inference:
@@ -55,15 +55,12 @@ def compute_metrics(p, return_entity_level_metrics=False, inference=False):
                 final_results[key] = value
         return final_results
     else:
-        return {
+        return results if inference else {
             "precision": results["overall_precision"],
             "recall": results["overall_recall"],
             "f1": results["overall_f1"],
             "accuracy": results["overall_accuracy"],
         }
-
-
-
 
 
 def start_of_chunk(prev_tag, tag, prev_type, type_):
