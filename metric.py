@@ -44,6 +44,12 @@ def compute_metrics(p, return_entity_level_metrics=False, inference=False, save_
     for k, v in results.items():
         logger.info(f"\n{k}: {v}")
 
+    if save_result:
+        with open("result.txt", "w") as f:
+            f.write(f"\n {classification_report(true_labels, true_predictions, suffix=False)}")
+            for k, v in results.items():
+                f.write(f"\n{k}: {v}")
+
     if return_entity_level_metrics:
         # Unpack nested dictionaries
         final_results = {}
