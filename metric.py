@@ -11,28 +11,60 @@ metric = evaluate.load("seqeval")
 logger = logging.getLogger(__name__)
 
 
-def compute_metrics(p, return_entity_level_metrics=False, inference=False, save_result=False):
+def decompress_labels(x: list):
+    label_list = [
+        "B-DT", "B-LC", "B-OG", "B-PS", "B-QT", "B-TI", "B-DUR",
+        "O",  # 7
+        "I-DT", "I-LC", "I-OG", "I-PS", "I-QT", "I-TI", "I-DUR",
+    ]
+
+    result = []
+    before_num = 999
+    for idx, num in enumerate(x):
+        if num != -100:
+            result_num = num
+            if num != -100 and num != 7:
+                if before_num == num:
+                    bumper = 8 # num_labels
+                    result_num += bumper
+            result.append(label_list[result_num])
+            before_num = num
+    return result
+
+
+def compute_metrics(p, compress=True, inference=False, save_result=True):
     predictions, labels = p
 
     if not inference:
         predictions = np.argmax(predictions, axis=2)
 
-    label_list = utils.get_labels()
+    label_list = utils.get_labels(compress)
     id_to_label = {v: k for k, v in label_list.items()}
 
-    # Remove ignored index (special tokens)
-    true_predictions = [
-        [id_to_label[p] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(predictions, labels)
-    ]
+    if compress:
+        true_predictions = [
+            decompress_labels(y)
+            for (x, y) in zip(predictions, labels)
+        ]
 
-    true_labels = [
-        [id_to_label[l] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(predictions, labels)
-    ]
+        true_labels = [
+            decompress_labels(y)
+            for (x, y) in zip(predictions, labels)
+        ]
+
+    else:
+        true_predictions = [
+            [id_to_label[p] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
+
+        true_labels = [
+            [id_to_label[l] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
 
     results = metric.compute(predictions=true_predictions, references=true_labels)
-    tagging_inform = extract_tp_actual_correct(y_true=true_labels, y_pred=true_predictions)
+    tagging_inform = extract_tp_actual_correct(y_pred=true_predictions, y_true=true_labels)
 
     for k, v in results.items():
         try:
@@ -50,23 +82,12 @@ def compute_metrics(p, return_entity_level_metrics=False, inference=False, save_
             for k, v in results.items():
                 f.write(f"\n{k}: {v}")
 
-    if return_entity_level_metrics:
-        # Unpack nested dictionaries
-        final_results = {}
-        for key, value in results.items():
-            if isinstance(value, dict):
-                for n, v in value.items():
-                    final_results[f"{key}_{n}"] = v
-            else:
-                final_results[key] = value
-        return final_results
-    else:
-        return results if inference else {
-            "precision": results["overall_precision"],
-            "recall": results["overall_recall"],
-            "f1": results["overall_f1"],
-            "accuracy": results["overall_accuracy"],
-        }
+    return results if inference else {
+        "precision": results["overall_precision"],
+        "recall": results["overall_recall"],
+        "f1": results["overall_f1"],
+        "accuracy": results["overall_accuracy"],
+    }
 
 
 def start_of_chunk(prev_tag, tag, prev_type, type_):
