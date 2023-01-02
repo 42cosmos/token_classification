@@ -104,7 +104,7 @@ def main(args):
             print(transform_text)
         preds.extend(pred)
 
-    result = compute_metrics(p=(preds, trues), inference=True, compress=True)
+    result = compute_metrics(p=(preds, trues), inference=True, compress=False)
     print(result)
 
 

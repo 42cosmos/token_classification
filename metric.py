@@ -32,7 +32,7 @@ def decompress_labels(x: list):
     return result
 
 
-def compute_metrics(p, compress=True, inference=False, save_result=True):
+def compute_metrics(p, compress=False, inference=False, save_result=True):
     predictions, labels = p
 
     if not inference:
