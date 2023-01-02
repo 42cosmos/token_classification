@@ -14,9 +14,9 @@ LABEL_MAPPING = {
     9: 4,
     10: 5,  # B-TI
     11: 5,
-    12: 6,  # O
-    13: 7,
-    14: 7,  # B-DUR
+    12: 7,  # O
+    13: 6,
+    14: 6,  # B-DUR
     -100: -100,  # LABEL_PAD_TOKEN
 }
 
@@ -27,21 +27,25 @@ def init_logger():
                         level=logging.INFO)
 
 
-def get_labels():
-    label_raw = """B-DT(0)
-    I-DT(1)
-    B-LC(2)
-    I-LC(3)
-    B-OG(4)
-    I-OG(5)
-    B-PS(6)
-    I-PS(7)
-    B-QT(8)
-    I-QT(9)
-    B-TI(10)
-    I-TI(11)
-    O(12)
-    B-DUR(13)
-    I-DUR(14)""".split("\n")
-    result = {label.split("(")[0].strip(): int(label.split("(")[1].replace(")", "")) for label in label_raw}
+def get_labels(compress=False):
+    if compress:
+        label_order = ["DT", "LC", "OG", "PS", "QT", "TI", "DUR", "O"]
+        result = {label: idx for idx, label in enumerate(label_order)}
+    else:
+        label_raw = """B-DT(0)
+        I-DT(1)
+        B-LC(2)
+        I-LC(3)
+        B-OG(4)
+        I-OG(5)
+        B-PS(6)
+        I-PS(7)
+        B-QT(8)
+        I-QT(9)
+        B-TI(10)
+        I-TI(11)
+        O(12)
+        B-DUR(13)
+        I-DUR(14)""".split("\n")
+        result = {label.split("(")[0].strip(): int(label.split("(")[1].replace(")", "")) for label in label_raw}
     return result
