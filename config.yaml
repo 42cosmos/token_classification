@@ -6,20 +6,19 @@ seed: 42
 
 use_token_types: true
 padding: max_length
-max_token_length: 120
+max_token_length: 256
 pad_token_label_id: -100
 
 num_train_epochs: 5
 train_batch_size: 32
 valid_batch_size: 32
-num_epochs: 5
-learning_rate: 0.0003
+learning_rate: 0.00003
 weight_decay: 0.001
 warmup_steps: 500
 warmup_ratio: 0.05
 classifier_dropout: 0.1
 gradient_accumulation_steps: 1
-fp16: false
+fp16: true
 evaluation_strategy: steps
 logging_steps: 100
 save_strategy: steps
@@ -30,4 +29,5 @@ max_grad_norm: 1.0
 
 save_steps: 1000
 
-write_pred: false
+write_pred: true
+debug: false
