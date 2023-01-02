@@ -40,7 +40,7 @@ def main(args):
         saved_config = yaml.load(f, Loader=yaml.FullLoader)
         hparams = EasyDict(saved_config)
 
-    hparams.dset_name = args.dset_name
+    hparams.dset_name = args.dataset
     set_seed(hparams.seed)
 
     label_to_id = utils.get_labels()
@@ -94,18 +94,17 @@ def main(args):
         output_dir=hparams.checkpoint_path,
         do_train=args.do_train,
         do_eval=args.do_eval,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
+        evaluation_strategy="steps",
+        save_strategy="steps",
         per_device_train_batch_size=hparams.train_batch_size,
         per_device_eval_batch_size=hparams.valid_batch_size,
         learning_rate=hparams.learning_rate,
         adam_epsilon=hparams.adam_epsilon,
         num_train_epochs=hparams.num_train_epochs,
         weight_decay=hparams.weight_decay,
-        # logging_steps=hparams.logging_steps,
         seed=hparams.seed,
         fp16=hparams.fp16,
-        warmup_steps=hparams.warmup_steps,
+        # warmup_steps=hparams.warmup_steps,
         warmup_ratio=hparams.warmup_ratio,
         gradient_accumulation_steps=hparams.gradient_accumulation_steps,
         metric_for_best_model="f1",
@@ -120,7 +119,6 @@ def main(args):
                       tokenizer=tokenizer,
                       data_collator=data_collator,
                       compute_metrics=compute_metrics,
-                      callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
                       )
 
     if args.do_train:
@@ -152,7 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
     parser.add_argument("--load_checkpoint", action="store_true", help="Load checkpoint")
-    parser.add_argument("--dset_name", default="klue", help="dataset name you want to use", choices=["klue", "docent"])
+    parser.add_argument("--dataset", default="klue", help="dataset name you want to use", choices=["klue", "docent"])
 
     args = parser.parse_args()
     main(args)
