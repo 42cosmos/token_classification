@@ -51,8 +51,8 @@ def main(args):
     id_to_label = {v: k for k, v in label_to_id.items()}
     num_labels = len(label_to_id)
 
-    logger.info(f"***** Load Model from {hparams.model_name_or_path} *****")
     hparams.model_name_or_path = hparams.checkpoint_path
+    logger.info(f"***** Load Model from {hparams.model_name_or_path} *****")
 
     config = AutoConfig.from_pretrained(
         hparams.model_name_or_path,
@@ -71,7 +71,6 @@ def main(args):
         hparams.model_name_or_path,
         config=config,
     )
-
     loader = Loader(hparams, tokenizer)
 
     dset_type = "test" if args.dset_name == "docent" else "validation"
@@ -85,18 +84,28 @@ def main(args):
     model.eval()
 
     epoch_iterator = tqdm(test_dataset, desc="Iteration")
-
+    debug = hparams.debug
     for step, batch in enumerate(epoch_iterator):
-        trues.append(batch["labels"])
+        trues.append(batch.pop("labels"))
         batch = {k: torch.tensor(t).unsqueeze(0).to(device) for k, t in batch.items()}
-
         outputs = model(**batch)
-
         pred = outputs.logits.argmax(dim=2)
         pred = pred.detach().cpu().numpy()
+        if debug:
+            transform_text = ""
+            print(f'************** Step : {step} **************')
+            original_text = loader.tokenizer.decode(batch['input_ids'][0][1:-1])
+            decode_predictions = [id_to_label[p] for p in pred[0][1:-1]]
+
+            print(f'Original Text : {original_text}')
+            print(f'Decode Label : {decode_predictions}')
+            for token_ids, label_ids in zip(batch['input_ids'][0][1:-1], pred[0][1:-1]):
+                transform_text += f'{loader.tokenizer.decode(token_ids).replace("##", "")}({id_to_label[label_ids]})'
+            print(transform_text)
         preds.extend(pred)
 
-    compute_metrics(p=(preds, trues), inference=True)
+    result = compute_metrics(p=(preds, trues), inference=True, compress=True)
+    print(result)
 
 
 if __name__ == "__main__":
